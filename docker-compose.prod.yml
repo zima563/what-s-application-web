@@ -8,17 +8,15 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: whatsapp_db
-      MYSQL_USER: whatsapp_user
-      MYSQL_PASSWORD: whatsapp_password
     volumes:
       - mysql_prod_data:/var/lib/mysql
     networks:
       - whatsapp-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   auth-service:
     build:
@@ -30,8 +28,8 @@ services:
       PORT: 5001
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: whatsapp_user
-      DB_PASSWORD: whatsapp_password
+      DB_USER: root
+      DB_PASSWORD: rootpassword
       DB_NAME: whatsapp_db
       JWT_SECRET: super_secret_jwt_key_production_2026
     depends_on:
@@ -50,8 +48,8 @@ services:
       PORT: 5002
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: whatsapp_user
-      DB_PASSWORD: whatsapp_password
+      DB_USER: root
+      DB_PASSWORD: rootpassword
       DB_NAME: whatsapp_db
       JWT_SECRET: super_secret_jwt_key_production_2026
     depends_on:
@@ -70,8 +68,8 @@ services:
       PORT: 5003
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: whatsapp_user
-      DB_PASSWORD: whatsapp_password
+      DB_USER: root
+      DB_PASSWORD: rootpassword
       DB_NAME: whatsapp_db
       JWT_SECRET: super_secret_jwt_key_production_2026
     depends_on:
