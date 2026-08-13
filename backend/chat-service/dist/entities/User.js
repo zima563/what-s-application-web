@@ -43,7 +43,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], User.prototype, "isOnline", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: "timestamp", nullable: true }),
+    (0, typeorm_1.Column)({ type: "datetime", nullable: true }),
     __metadata("design:type", Object)
 ], User.prototype, "lastSeen", void 0);
 __decorate([

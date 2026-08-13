@@ -56,7 +56,7 @@ __decorate([
     __metadata("design:type", String)
 ], Message.prototype, "content", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: "enum", enum: MessageType, default: MessageType.TEXT }),
+    (0, typeorm_1.Column)({ default: MessageType.TEXT }),
     __metadata("design:type", String)
 ], Message.prototype, "type", void 0);
 __decorate([
@@ -64,7 +64,7 @@ __decorate([
     __metadata("design:type", String)
 ], Message.prototype, "mediaUrl", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: "enum", enum: MessageStatus, default: MessageStatus.SENT }),
+    (0, typeorm_1.Column)({ default: MessageStatus.SENT }),
     __metadata("design:type", String)
 ], Message.prototype, "status", void 0);
 __decorate([
