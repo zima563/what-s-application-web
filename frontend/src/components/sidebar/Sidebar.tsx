@@ -83,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div style={{ fontSize: "11px", color: "var(--accent-green)", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}>
               <span style={{ width: "6px", height: "6px", backgroundColor: "var(--accent-green)", borderRadius: "50%", display: "inline-block" }} />
-              Online
+              Online • <span style={{ color: "#38bdf8", fontWeight: "700" }}>AWS Live</span> ⚡
             </div>
           </div>
         </div>
