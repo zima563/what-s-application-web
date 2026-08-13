@@ -94,3 +94,5 @@ If running without Docker:
 - **Online Presence**: Live green dot & online status updates.
 - **Direct & Group Chats**: Create custom multi-participant groups.
 - **Audio & Push Toast Notifications**: Built-in sound effects on incoming messages.
+
+<!-- CI/CD Trigger Update -->
