@@ -34,13 +34,22 @@ app.get("/health", (req, res) => {
 app.use(errorMiddleware_1.globalErrorHandler);
 // Socket.io initialization
 (0, chatSocket_1.setupSocketIO)(io);
-database_1.AppDataSource.initialize()
-    .then(() => {
-    console.log("✅ [Chat Service] Database connected successfully via TypeORM.");
+async function startServer() {
+    let retries = 15;
+    while (retries > 0) {
+        try {
+            await database_1.AppDataSource.initialize();
+            console.log("✅ [Chat Service] Database connected successfully via TypeORM.");
+            break;
+        }
+        catch (error) {
+            console.error(`⚠️ [Chat Service] Database connection failed. Retrying in 3s... (${retries} attempts left)`, error);
+            retries -= 1;
+            await new Promise((res) => setTimeout(res, 3000));
+        }
+    }
     server.listen(PORT, () => {
         console.log(`🚀 [Chat Service] HTTP & WebSockets running on port ${PORT}`);
     });
-})
-    .catch((error) => {
-    console.error("❌ [Chat Service] Database connection failed:", error);
-});
+}
+startServer();

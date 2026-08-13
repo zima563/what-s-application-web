@@ -22,13 +22,22 @@ app.get("/health", (req, res) => {
 });
 // Global Error Handler
 app.use(errorMiddleware_1.globalErrorHandler);
-database_1.AppDataSource.initialize()
-    .then(() => {
-    console.log("✅ [Notification Service] Database connected successfully via TypeORM.");
+async function startServer() {
+    let retries = 15;
+    while (retries > 0) {
+        try {
+            await database_1.AppDataSource.initialize();
+            console.log("✅ [Notification Service] Database connected successfully via TypeORM.");
+            break;
+        }
+        catch (error) {
+            console.error(`⚠️ [Notification Service] Database connection failed. Retrying in 3s... (${retries} attempts left)`, error);
+            retries -= 1;
+            await new Promise((res) => setTimeout(res, 3000));
+        }
+    }
     app.listen(PORT, () => {
         console.log(`🚀 [Notification Service] Server running on port ${PORT}`);
     });
-})
-    .catch((error) => {
-    console.error("❌ [Notification Service] Database connection failed:", error);
-});
+}
+startServer();

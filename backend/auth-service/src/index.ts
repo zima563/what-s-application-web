@@ -24,13 +24,23 @@ app.get("/health", (req, res) => {
 // Global Error Handler
 app.use(globalErrorHandler);
 
-AppDataSource.initialize()
-  .then(() => {
-    console.log("✅ [Auth Service] Database connected successfully via TypeORM.");
-    app.listen(PORT, () => {
-      console.log(`🚀 [Auth Service] Server running on port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("❌ [Auth Service] Database connection failed:", error);
+async function startServer() {
+  let retries = 15;
+  while (retries > 0) {
+    try {
+      await AppDataSource.initialize();
+      console.log("✅ [Auth Service] Database connected successfully via TypeORM.");
+      break;
+    } catch (error) {
+      console.error(`⚠️ [Auth Service] Database connection failed. Retrying in 3s... (${retries} attempts left)`, error);
+      retries -= 1;
+      await new Promise((res) => setTimeout(res, 3000));
+    }
+  }
+
+  app.listen(PORT, () => {
+    console.log(`🚀 [Auth Service] Server running on port ${PORT}`);
   });
+}
+
+startServer();
