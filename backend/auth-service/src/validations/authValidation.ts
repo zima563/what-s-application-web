@@ -14,8 +14,8 @@ export const registerSchema = Joi.object({
     "string.min": "Password must be at least 6 characters",
     "any.required": "Password is required"
   }),
-  avatar: Joi.string().uri().optional(),
-  statusMessage: Joi.string().max(100).optional()
+  avatar: Joi.string().uri().allow("", null).optional(),
+  statusMessage: Joi.string().max(100).allow("", null).optional()
 });
 
 export const loginSchema = Joi.object({
@@ -30,6 +30,6 @@ export const loginSchema = Joi.object({
 
 export const updateProfileSchema = Joi.object({
   username: Joi.string().min(3).max(30).optional(),
-  avatar: Joi.string().uri().optional(),
-  statusMessage: Joi.string().max(100).optional()
+  avatar: Joi.string().uri().allow("", null).optional(),
+  statusMessage: Joi.string().max(100).allow("", null).optional()
 });

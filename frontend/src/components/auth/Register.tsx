@@ -24,16 +24,17 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
 
     try {
       const response = await authApi.post("/register", {
-        username,
-        email,
+        username: username.trim(),
+        email: email.trim(),
         password,
-        avatar: avatar || undefined,
-        statusMessage: statusMessage || undefined
+        avatar: avatar.trim() ? avatar.trim() : undefined,
+        statusMessage: statusMessage.trim() ? statusMessage.trim() : undefined
       });
       const { token, user } = response.data.data;
       login(token, user);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      const apiMsg = err.response?.data?.message;
+      setError(apiMsg || err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
