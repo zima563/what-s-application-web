@@ -1,4 +1,4 @@
-name: CI/CD Microservices Pipeline
+name: CI/CD Microservices Automated Pipeline
 
 on:
   push:
@@ -7,110 +7,39 @@ on:
     branches: [ main, master ]
 
 jobs:
-  # Job 1: Test & Typecheck
-  test-and-lint:
+  # Job 1: Build Verification
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: '**/package-json.lock'
 
-      - name: Install & Test Auth Service
+      - name: Install & Verify Microservices
         run: |
-          cd backend/auth-service
-          npm ci || npm install
-          npm run build
+          cd backend/auth-service && npm install && npm run build
+          cd ../chat-service && npm install && npm run build
+          cd ../notification-service && npm install && npm run build
+          cd ../../frontend && npm install && npm run build
 
-      - name: Install & Test Chat Service
-        run: |
-          cd backend/chat-service
-          npm ci || npm install
-          npm run build
-
-      - name: Install & Test Notification Service
-        run: |
-          cd backend/notification-service
-          npm ci || npm install
-          npm run build
-
-      - name: Install & Test Frontend App
-        run: |
-          cd frontend
-          npm ci || npm install
-          npm run build
-
-  # Job 2: Build & Push Docker Images
-  build-and-push-docker:
-    needs: test-and-lint
+  # Job 2: 100% Automated Deployment to AWS Server via SSH on git push
+  deploy-to-aws:
+    needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry (GHCR)
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push Auth Service Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/auth-service
-          file: ./backend/auth-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/auth-service:latest
-
-      - name: Build & Push Chat Service Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/chat-service
-          file: ./backend/chat-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/chat-service:latest
-
-      - name: Build & Push Notification Service Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/notification-service
-          file: ./backend/notification-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/notification-service:latest
-
-      - name: Build & Push Frontend Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:latest
-
-  # Job 3: Automated SSH Deploy to Server
-  deploy-to-vps:
-    needs: build-and-push-docker
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    steps:
-      - name: Deploy to VPS Server via SSH
+      - name: SSH and Deploy to AWS Server automatically
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/whatsapp-app
+            cd ~/what-s-application-web || cd /var/www/whatsapp-app
             git pull origin main
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --build
             docker system prune -f
