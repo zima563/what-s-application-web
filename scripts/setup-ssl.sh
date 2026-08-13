@@ -1,21 +1,26 @@
 #!/bin/bash
-# Script to generate Let's Encrypt SSL Certificates for Production Domain
+
+# SSL Setup Script for WhatsApp Web Microservices
+set -e
 
 DOMAIN=$1
-EMAIL=$2
 
-if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
-    echo "Usage: ./setup-ssl.sh <your-domain.com> <your-email@example.com>"
-    exit 1
+if [ -z "$DOMAIN" ]; then
+    echo "=================================================="
+    echo "  Generating Self-Signed SSL Certificate for IP"
+    echo "=================================================="
+    mkdir -p gateway/ssl
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout gateway/ssl/key.pem \
+      -out gateway/ssl/cert.pem \
+      -subj "/C=US/ST=State/L=City/O=WhatsApp/OU=IT/CN=3.66.219.100"
+    echo "SSL Certificate generated successfully in gateway/ssl/"
+else
+    echo "=================================================="
+    echo "  Setting up Let's Encrypt SSL for $DOMAIN"
+    echo "=================================================="
+    sudo apt update
+    sudo apt install -y certbot python3-certbot-nginx
+    sudo certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN
+    echo "Let's Encrypt SSL successfully configured for $DOMAIN!"
 fi
-
-echo "🔒 Requesting SSL Certificate for $DOMAIN..."
-
-sudo apt update
-sudo apt install -y certbot python3-certbot-nginx
-
-sudo certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos -m $EMAIL
-
-echo "✅ SSL Certificate successfully issued!"
-echo "Certificate path: /etc/letsencrypt/live/$DOMAIN/fullchain.pem"
-echo "Key path: /etc/letsencrypt/live/$DOMAIN/privkey.pem"

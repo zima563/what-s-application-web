@@ -19,7 +19,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/what-s-application-web || cd /var/www/whatsapp-app
+            mkdir -p gateway/ssl
+            if [ ! -f gateway/ssl/key.pem ]; then
+              openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                -keyout gateway/ssl/key.pem \
+                -out gateway/ssl/cert.pem \
+                -subj "/C=US/ST=State/L=City/O=WhatsApp/OU=IT/CN=AWS-Server"
+            fi
             git fetch --all
             git reset --hard origin/main
             git pull origin main
-            docker compose -f docker-compose.prod.yml up -d --build || docker-compose -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.prod.yml up -d --build

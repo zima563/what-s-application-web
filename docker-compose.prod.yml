@@ -1,25 +1,24 @@
+version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
     container_name: whatsapp_mysql_prod
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${DB_NAME:-whatsapp_db}
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: whatsapp_db
+      MYSQL_USER: whatsapp_user
+      MYSQL_PASSWORD: whatsapp_password
     volumes:
       - mysql_prod_data:/var/lib/mysql
+    networks:
+      - whatsapp-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   auth-service:
     build:
@@ -31,26 +30,15 @@ services:
       PORT: 5001
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
-      DB_NAME: ${DB_NAME:-whatsapp_db}
-      JWT_SECRET: ${JWT_SECRET:-supersecretwhatsappkey123}
-      NODE_ENV: production
-    ports:
-      - "5001:5001"
+      DB_USER: whatsapp_user
+      DB_PASSWORD: whatsapp_password
+      DB_NAME: whatsapp_db
+      JWT_SECRET: super_secret_jwt_key_production_2026
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5001/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    networks:
+      - whatsapp-network
 
   chat-service:
     build:
@@ -62,26 +50,15 @@ services:
       PORT: 5002
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
-      DB_NAME: ${DB_NAME:-whatsapp_db}
-      JWT_SECRET: ${JWT_SECRET:-supersecretwhatsappkey123}
-      NODE_ENV: production
-    ports:
-      - "5002:5002"
+      DB_USER: whatsapp_user
+      DB_PASSWORD: whatsapp_password
+      DB_NAME: whatsapp_db
+      JWT_SECRET: super_secret_jwt_key_production_2026
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5002/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    networks:
+      - whatsapp-network
 
   notification-service:
     build:
@@ -93,47 +70,15 @@ services:
       PORT: 5003
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
-      DB_NAME: ${DB_NAME:-whatsapp_db}
-      JWT_SECRET: ${JWT_SECRET:-supersecretwhatsappkey123}
-      NODE_ENV: production
-    ports:
-      - "5003:5003"
+      DB_USER: whatsapp_user
+      DB_PASSWORD: whatsapp_password
+      DB_NAME: whatsapp_db
+      JWT_SECRET: super_secret_jwt_key_production_2026
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5003/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  api-gateway:
-    image: nginx:alpine
-    container_name: whatsapp_gateway_prod
-    restart: always
-    volumes:
-      - ./gateway/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8000:8000"
-    depends_on:
-      - auth-service
-      - chat-service
-      - notification-service
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    networks:
+      - whatsapp-network
 
   frontend:
     build:
@@ -141,15 +86,31 @@ services:
       dockerfile: Dockerfile
     container_name: whatsapp_frontend_prod
     restart: always
+    networks:
+      - whatsapp-network
+
+  api-gateway:
+    image: nginx:alpine
+    container_name: whatsapp_gateway_prod
+    restart: always
+    volumes:
+      - ./gateway/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./gateway/ssl:/etc/nginx/ssl:ro
     ports:
+      - "80:80"
+      - "443:443"
       - "3000:80"
     depends_on:
-      - api-gateway
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - auth-service
+      - chat-service
+      - notification-service
+      - frontend
+    networks:
+      - whatsapp-network
+
+networks:
+  whatsapp-network:
+    driver: bridge
 
 volumes:
   mysql_prod_data:
