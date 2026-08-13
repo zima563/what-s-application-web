@@ -29,7 +29,7 @@ __decorate([
     __metadata("design:type", String)
 ], Notification.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: "enum", enum: NotificationType, default: NotificationType.NEW_MESSAGE }),
+    (0, typeorm_1.Column)({ default: NotificationType.NEW_MESSAGE }),
     __metadata("design:type", String)
 ], Notification.prototype, "type", void 0);
 __decorate([
