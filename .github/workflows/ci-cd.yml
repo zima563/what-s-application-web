@@ -21,4 +21,8 @@ jobs:
           printf "%s\n" "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -o StrictHostKeyChecking=no "$USER@$HOST" "cd ~/what-s-application-web || cd /var/www/whatsapp-app; git pull origin main; docker compose -f docker-compose.prod.yml up -d --build"
+          ssh -o StrictHostKeyChecking=no "$USER@$HOST" '
+            cd ~/what-s-application-web || cd /var/www/whatsapp-app
+            git pull origin main
+            sudo docker compose -f docker-compose.prod.yml up -d --build
+          '
