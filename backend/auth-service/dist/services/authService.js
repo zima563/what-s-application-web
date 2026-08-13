@@ -18,11 +18,13 @@ class AuthService {
         return jsonwebtoken_1.default.sign({ id: user.id, email: user.email, username: user.username }, secret, { expiresIn: "7d" });
     }
     async register(data) {
-        const existingUser = await this.userRepository.findOne({
-            where: [{ email: data.email }, { username: data.username }]
-        });
-        if (existingUser) {
-            throw new AppError_1.AppError("Email or Username already in use", 400);
+        const existingEmail = await this.userRepository.findOne({ where: { email: data.email } });
+        if (existingEmail) {
+            throw new AppError_1.AppError("Email is already registered. Please sign in or use another email.", 400);
+        }
+        const existingUsername = await this.userRepository.findOne({ where: { username: data.username } });
+        if (existingUsername) {
+            throw new AppError_1.AppError("Username is already taken. Please choose another username.", 400);
         }
         const hashedPassword = await bcryptjs_1.default.hash(data.password, 12);
         const user = this.userRepository.create({

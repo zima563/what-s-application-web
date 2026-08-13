@@ -19,8 +19,8 @@ exports.registerSchema = joi_1.default.object({
         "string.min": "Password must be at least 6 characters",
         "any.required": "Password is required"
     }),
-    avatar: joi_1.default.string().uri().optional(),
-    statusMessage: joi_1.default.string().max(100).optional()
+    avatar: joi_1.default.string().uri().allow("", null).optional(),
+    statusMessage: joi_1.default.string().max(100).allow("", null).optional()
 });
 exports.loginSchema = joi_1.default.object({
     email: joi_1.default.string().email().required().messages({
@@ -33,6 +33,6 @@ exports.loginSchema = joi_1.default.object({
 });
 exports.updateProfileSchema = joi_1.default.object({
     username: joi_1.default.string().min(3).max(30).optional(),
-    avatar: joi_1.default.string().uri().optional(),
-    statusMessage: joi_1.default.string().max(100).optional()
+    avatar: joi_1.default.string().uri().allow("", null).optional(),
+    statusMessage: joi_1.default.string().max(100).allow("", null).optional()
 });

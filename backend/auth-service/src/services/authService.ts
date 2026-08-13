@@ -17,12 +17,14 @@ export class AuthService {
   }
 
   async register(data: { username: string; email: string; password: string; avatar?: string; statusMessage?: string }) {
-    const existingUser = await this.userRepository.findOne({
-      where: [{ email: data.email }, { username: data.username }]
-    });
+    const existingEmail = await this.userRepository.findOne({ where: { email: data.email } });
+    if (existingEmail) {
+      throw new AppError("Email is already registered. Please sign in or use another email.", 400);
+    }
 
-    if (existingUser) {
-      throw new AppError("Email or Username already in use", 400);
+    const existingUsername = await this.userRepository.findOne({ where: { username: data.username } });
+    if (existingUsername) {
+      throw new AppError("Username is already taken. Please choose another username.", 400);
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
