@@ -1,0 +1,152 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ChatService = void 0;
+const database_1 = require("../config/database");
+const Conversation_1 = require("../entities/Conversation");
+const Message_1 = require("../entities/Message");
+const User_1 = require("../entities/User");
+const AppError_1 = require("../utils/AppError");
+class ChatService {
+    constructor() {
+        this.conversationRepo = database_1.AppDataSource.getRepository(Conversation_1.Conversation);
+        this.messageRepo = database_1.AppDataSource.getRepository(Message_1.Message);
+        this.userRepo = database_1.AppDataSource.getRepository(User_1.User);
+    }
+    async getUserConversations(userId) {
+        const conversations = await this.conversationRepo
+            .createQueryBuilder("conv")
+            .leftJoinAndSelect("conv.participants", "participant")
+            .leftJoinAndSelect("conv.messages", "msg")
+            .where((qb) => {
+            const subQuery = qb
+                .subQuery()
+                .select("cp.conversationId")
+                .from("conversation_participants", "cp")
+                .where("cp.userId = :userId")
+                .getQuery();
+            return "conv.id IN " + subQuery;
+        }, { userId })
+            .orderBy("conv.lastMessageTime", "DESC")
+            .addOrderBy("conv.updatedAt", "DESC")
+            .getMany();
+        // Calculate unread count per conversation
+        const result = await Promise.all(conversations.map(async (conv) => {
+            const unreadCount = await this.messageRepo
+                .createQueryBuilder("m")
+                .where("m.conversationId = :convId", { convId: conv.id })
+                .andWhere("m.senderId != :userId", { userId })
+                .andWhere("m.status != :readStatus", { readStatus: Message_1.MessageStatus.READ })
+                .getCount();
+            return {
+                ...conv,
+                unreadCount
+            };
+        }));
+        return result;
+    }
+    async getOrCreateDirectConversation(userId, recipientId) {
+        if (userId === recipientId) {
+            throw new AppError_1.AppError("Cannot create a chat with yourself", 400);
+        }
+        const user = await this.userRepo.findOne({ where: { id: userId } });
+        const recipient = await this.userRepo.findOne({ where: { id: recipientId } });
+        if (!user || !recipient) {
+            throw new AppError_1.AppError("User or recipient not found", 404);
+        }
+        // Check if direct conversation already exists
+        const existing = await this.conversationRepo
+            .createQueryBuilder("conv")
+            .innerJoin("conv.participants", "p1", "p1.id = :userId", { userId })
+            .innerJoin("conv.participants", "p2", "p2.id = :recipientId", { recipientId })
+            .where("conv.isGroup = false")
+            .getOne();
+        if (existing) {
+            return this.conversationRepo.findOne({
+                where: { id: existing.id },
+                relations: ["participants"]
+            });
+        }
+        // Create new direct conversation
+        const newConv = this.conversationRepo.create({
+            isGroup: false,
+            participants: [user, recipient]
+        });
+        await this.conversationRepo.save(newConv);
+        return newConv;
+    }
+    async createGroupConversation(userId, name, participantIds) {
+        const creator = await this.userRepo.findOne({ where: { id: userId } });
+        if (!creator)
+            throw new AppError_1.AppError("Creator user not found", 404);
+        const uniqueIds = Array.from(new Set([...participantIds, userId]));
+        const participants = await this.userRepo.findByIds(uniqueIds);
+        const group = this.conversationRepo.create({
+            isGroup: true,
+            name,
+            groupAvatar: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=250&q=80",
+            participants
+        });
+        await this.conversationRepo.save(group);
+        return group;
+    }
+    async getConversationMessages(conversationId, userId) {
+        // Check membership
+        const conv = await this.conversationRepo
+            .createQueryBuilder("conv")
+            .leftJoinAndSelect("conv.participants", "p")
+            .where("conv.id = :conversationId", { conversationId })
+            .getOne();
+        if (!conv) {
+            throw new AppError_1.AppError("Conversation not found", 404);
+        }
+        const isParticipant = conv.participants.some((p) => p.id === userId);
+        if (!isParticipant) {
+            throw new AppError_1.AppError("You are not a member of this conversation", 403);
+        }
+        const messages = await this.messageRepo.find({
+            where: { conversationId },
+            order: { createdAt: "ASC" },
+            relations: ["sender"]
+        });
+        return messages;
+    }
+    async createMessage(senderId, conversationId, content, type = Message_1.MessageType.TEXT, mediaUrl) {
+        const conversation = await this.conversationRepo.findOne({
+            where: { id: conversationId },
+            relations: ["participants"]
+        });
+        if (!conversation) {
+            throw new AppError_1.AppError("Conversation not found", 404);
+        }
+        const message = this.messageRepo.create({
+            conversationId,
+            senderId,
+            content,
+            type,
+            mediaUrl: mediaUrl || undefined,
+            status: Message_1.MessageStatus.SENT
+        });
+        await this.messageRepo.save(message);
+        // Update conversation last message time
+        conversation.lastMessageContent = content;
+        conversation.lastMessageTime = message.createdAt;
+        await this.conversationRepo.save(conversation);
+        const fullMessage = await this.messageRepo.findOne({
+            where: { id: message.id },
+            relations: ["sender"]
+        });
+        return { message: fullMessage, conversation };
+    }
+    async markMessagesAsRead(conversationId, userId) {
+        await this.messageRepo
+            .createQueryBuilder()
+            .update(Message_1.Message)
+            .set({ status: Message_1.MessageStatus.READ })
+            .where("conversationId = :conversationId", { conversationId })
+            .andWhere("senderId != :userId", { userId })
+            .andWhere("status != :readStatus", { readStatus: Message_1.MessageStatus.READ })
+            .execute();
+        return { success: true };
+    }
+}
+exports.ChatService = ChatService;
