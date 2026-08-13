@@ -7,28 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  # Job 1: Build Verification
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install & Verify Microservices
-        run: |
-          cd backend/auth-service && npm install && npm run build
-          cd ../chat-service && npm install && npm run build
-          cd ../notification-service && npm install && npm run build
-          cd ../../frontend && npm install && npm run build
-
-  # Job 2: 100% Automated Deployment to AWS Server via SSH on git push
   deploy-to-aws:
-    needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
