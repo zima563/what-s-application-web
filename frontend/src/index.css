@@ -92,3 +92,36 @@ body {
 .animate-pulse {
   animation: pulse 1.5s infinite;
 }
+
+/* Responsive Mobile Layout Rules */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column !important;
+  }
+
+  .sidebar-container {
+    width: 100% !important;
+  }
+
+  .chat-window-container {
+    width: 100% !important;
+  }
+
+  .mobile-show-sidebar .chat-window-container {
+    display: none !important;
+  }
+
+  .mobile-show-chat .sidebar-container {
+    display: none !important;
+  }
+
+  .mobile-back-btn {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-back-btn {
+    display: none !important;
+  }
+}

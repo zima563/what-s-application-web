@@ -52,15 +52,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   });
 
   return (
-    <div style={{
-      width: "380px",
-      height: "100%",
-      backgroundColor: "var(--bg-sidebar)",
-      borderRight: "1px solid var(--border-color)",
-      display: "flex",
-      flexDirection: "column",
-      flexShrink: 0
-    }}>
+    <div
+      className="sidebar-container"
+      style={{
+        width: "380px",
+        height: "100%",
+        backgroundColor: "var(--bg-sidebar)",
+        borderRight: "1px solid var(--border-color)",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0
+      }}
+    >
       {/* Sidebar Header */}
       <div style={{
         padding: "12px 16px",

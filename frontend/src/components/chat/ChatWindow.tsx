@@ -5,13 +5,14 @@ import { useSocket } from "../../context/SocketContext";
 import { chatApi } from "../../services/api";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
-import { Phone, Video, Search, MoreVertical, MessageSquare, ShieldCheck } from "lucide-react";
+import { Phone, Video, Search, MoreVertical, MessageSquare, ShieldCheck, ArrowLeft } from "lucide-react";
 
 interface ChatWindowProps {
   conversation: Conversation | null;
+  onBack?: () => void;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
+export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, onBack }) => {
   const { user } = useAuth();
   const { socket, onlineUserIds, typingStatus } = useSocket();
 
@@ -140,16 +141,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
 
   if (!conversation) {
     return (
-      <div style={{
-        flex: 1,
-        height: "100%",
-        backgroundColor: "var(--bg-chat)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        borderBottom: "6px solid var(--accent-green)"
-      }}>
+      <div
+        className="chat-window-container"
+        style={{
+          flex: 1,
+          height: "100%",
+          backgroundColor: "var(--bg-chat)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          borderBottom: "6px solid var(--accent-green)"
+        }}
+      >
         <div style={{ textAlign: "center", maxWidth: "420px", padding: "20px" }}>
           <div style={{
             width: "80px",
@@ -178,13 +182,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
   }
 
   return (
-    <div style={{
-      flex: 1,
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      backgroundColor: "var(--bg-chat)"
-    }}>
+    <div
+      className="chat-window-container"
+      style={{
+        flex: 1,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "var(--bg-chat)"
+      }}
+    >
       {/* Header */}
       <div style={{
         padding: "10px 16px",
@@ -195,7 +202,27 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
         borderBottom: "1px solid var(--border-color)",
         boxShadow: "var(--shadow-sm)"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mobile-back-btn"
+              title="Back to Conversations List"
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-primary)",
+                cursor: "pointer",
+                padding: "4px",
+                marginRight: "2px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <ArrowLeft size={22} />
+            </button>
+          )}
           <img src={avatar} alt={title} style={{ width: "42px", height: "42px", borderRadius: "50%", objectFit: "cover" }} />
           <div>
             <div style={{ fontWeight: "600", fontSize: "16px", color: "var(--text-primary)" }}>{title}</div>

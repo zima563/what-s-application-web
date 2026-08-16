@@ -77,13 +77,16 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div style={{
-      width: "100vw",
-      height: "100vh",
-      display: "flex",
-      backgroundColor: "var(--bg-app)",
-      overflow: "hidden"
-    }}>
+    <div
+      className={activeConversation ? "app-container mobile-show-chat" : "app-container mobile-show-sidebar"}
+      style={{
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        backgroundColor: "var(--bg-app)",
+        overflow: "hidden"
+      }}
+    >
       <NotificationToast />
       
       {/* WhatsApp Sidebar */}
@@ -95,7 +98,10 @@ export const App: React.FC = () => {
       />
 
       {/* Active Conversation Main Screen */}
-      <ChatWindow conversation={activeConversation} />
+      <ChatWindow
+        conversation={activeConversation}
+        onBack={() => setActiveConversation(null)}
+      />
     </div>
   );
 };
