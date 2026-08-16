@@ -65,20 +65,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
 
   // Listen for incoming real-time socket messages
   useEffect(() => {
-    if (!socket || !conversation) return;
+    if (!socket || !conversation || !user) return;
 
     const handleReceiveMessage = (newMessage: Message) => {
       if (newMessage.conversationId === conversation.id) {
         setMessages((prev) => [...prev, newMessage]);
-        // Auto mark read if active
-        socket.emit("mark_read", { conversationId: conversation.id });
+        // Auto mark read ONLY if incoming message from recipient
+        if (newMessage.senderId !== user.id) {
+          socket.emit("mark_read", { conversationId: conversation.id });
+        }
       }
     };
 
     const handleMessagesRead = (data: { conversationId: string; readBy: string }) => {
-      if (data.conversationId === conversation.id) {
+      // ONLY turn ticks blue if the OTHER participant read the messages
+      if (data.conversationId === conversation.id && data.readBy !== user.id) {
         setMessages((prev) =>
-          prev.map((msg) => ({ ...msg, status: "read" as any }))
+          prev.map((msg) => (msg.senderId === user.id ? { ...msg, status: "read" as any } : msg))
         );
       }
     };
@@ -90,7 +93,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
       socket.off("receive_message", handleReceiveMessage);
       socket.off("messages_read", handleMessagesRead);
     };
-  }, [socket, conversation?.id]);
+  }, [socket, conversation?.id, user?.id]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

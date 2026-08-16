@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
+import { useAuth } from "../../context/AuthContext";
 import { Message } from "../../types";
 import { Bell, X } from "lucide-react";
 
 export const NotificationToast: React.FC = () => {
   const { socket } = useSocket();
+  const { user } = useAuth();
   const [toast, setToast] = useState<{ title: string; body: string; avatar?: string } | null>(null);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !user) return;
 
     const handleReceiveMessage = (msg: Message) => {
-      // Play soft audio alert tone
+      // Do NOT trigger sound/toast alert for the sender's own outgoing message
+      if (msg.senderId === user.id) return;
+
+      // Play soft audio alert tone for incoming messages
       try {
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const osc = audioCtx.createOscillator();
@@ -45,7 +50,7 @@ export const NotificationToast: React.FC = () => {
     return () => {
       socket.off("receive_message", handleReceiveMessage);
     };
-  }, [socket]);
+  }, [socket, user]);
 
   if (!toast) return null;
 
@@ -72,7 +77,7 @@ export const NotificationToast: React.FC = () => {
         {toast.avatar ? (
           <img src={toast.avatar} alt={toast.title} style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
         ) : (
-          <div style={{ width: "40px", height: "40px", borderRadius: "50%", backgroundColor: "var(--accent-green)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "50%", backgroundColor: "var(--accent-green)", display: "flex", alignItems: "center", justifyCenter: "center" }}>
             <Bell size={20} color="#ffffff" />
           </div>
         )}
